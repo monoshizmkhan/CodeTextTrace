@@ -1,6 +1,8 @@
 import pandas as pd
 from pathlib import Path
 import math
+import gc
+import random
 
 class DataReader():
     def __init__(self, projectTypes, filepaths):
@@ -166,8 +168,79 @@ class DataReader():
         self.splitData()
         return self.trainingData, self.testingData
 
-    def getSample(self):
+    def clear_dataframes(self):
+        del self.fullData
+        del self.testingData
+        del self.trainingData
+        del self.finalData
+        del self.originalData
+        del self.processedData
+        gc.collect()
+        self.fullData = pd.DataFrame()
+        self.testingData = pd.DataFrame()
+        self.trainingData = pd.DataFrame()
+        self.finalData = pd.DataFrame()
+        self.originalData = pd.DataFrame()
+        self.processedData = pd.DataFrame()
+
+    def getSample(self, a=20, b=5):
         self.splitData()
-        return self.trainingData[10:20], self.testingData[10:20]
+        train = self.trainingData[1:(a+1)]
+        test = self.testingData[1:(b+1)]
+        self.clear_dataframes()
+        return train, test
+
+    def createExpData(self):
+        original_file = Path("original_data_full.csv")
+        if (original_file.is_file()) == False:
+            print("Original data doesn't exist.\nCreating original data from raw data.")
+            print("Reading link files...")
+            self.readLinkFiles()
+            print("Generating original data...")
+            self.readCommitsIssues()
+            print("Saving to disk...")
+            (self.fullData).to_csv("original_data_full.csv")
+        else:
+            original_file2 = Path("original_data_exp.csv")
+            if (original_file2.is_file()) == False:
+                print("Creating experimental data...")
+                fullData = pd.read_csv(original_file)
+                total = len(fullData)
+                for index1, row1 in (fullData).iterrows():
+                    print(str(index1 + 1) + "/" + str(total))
+                    added = []
+                    while len(added)!=4:
+                        r = random.randint(0, total-1)
+                        r_row = fullData.iloc[[r]]
+                        if (r not in added) and (index1!=r):
+                            added.append(r)
+                            fullData = fullData.append({"Issue": r_row["Issue"], "Commit": r_row["Commit"], "Link": 0}, ignore_index=True)
+                print("New total data length: "+str(len(fullData)))
+                print(fullData.columns)
+                fullData = fullData.drop(['Unnamed: 0'], axis=1)
+                (fullData).to_csv("original_data_exp.csv")
+            else:
+                print("Experimental data exists.")
+                self.fullData = pd.read_csv("original_data_exp.csv")
+
+    def makeExpTrainingTesting(self):
+        self.fullData = self.fullData.sample(frac=1).reset_index(drop=True)
+        num_of_rows = len(self.fullData.index)
+        training_size = math.floor(num_of_rows * 0.7)
+        trainingData = self.fullData[0:training_size]
+        testingData = self.fullData[training_size:num_of_rows]
+        print("Training set size: " + str(len(trainingData.index)) + " rows")
+        print("Testing set size: " + str(len(testingData.index)) + " rows")
+        trainingData.to_csv("original_exp_training.csv")
+        testingData.to_csv("original_exp_testing.csv")
+
+    def getExpData(self):
+        trainingData = pd.read_csv("original_exp_training.csv")
+        trainingData = trainingData.drop(['Unnamed: 0', 'Unnamed: 0.1'], axis=1)
+        testingData = pd.read_csv("original_exp_testing.csv")
+        testingData = testingData.drop(['Unnamed: 0', 'Unnamed: 0.1'], axis=1)
+        return trainingData, testingData
+
+
 
 
