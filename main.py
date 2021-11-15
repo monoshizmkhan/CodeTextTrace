@@ -9,11 +9,12 @@ if __name__ == '__main__':
     projectTypes = ["dbcii"]
     filepaths = ["dbcli/pgcli/"]
     dr = DataReader(projectTypes, filepaths)
-    train, test = dr.getExpData()
+    _, test = dr.getExpData()
     #train, test = dr.getSample()
     #train, test = dr.getSample(a=100, b=20)
     #train, test = dr.getTrainTestData()
-    m = dualModel(train[1:101], test[1:21])
-    m.convertAndCompressData()
+    m = dualModel(_, test)
+    #m.convertAndCompressData()
+    m.convertAndCompressDataDivided()
     m.train()
     m.test()
