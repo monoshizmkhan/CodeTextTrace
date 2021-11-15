@@ -241,6 +241,36 @@ class DataReader():
         testingData = testingData.drop(['Unnamed: 0', 'Unnamed: 0.1'], axis=1)
         return trainingData, testingData
 
+    def saveDividedExpData(self):
+        trainingData = pd.read_csv("original_exp_training.csv")
+        trainingData = trainingData.drop(['Unnamed: 0', 'Unnamed: 0.1'], axis=1)
+        testingData = pd.read_csv("original_exp_testing.csv")
+        testingData = testingData.drop(['Unnamed: 0', 'Unnamed: 0.1'], axis=1)
+        total_length = len(trainingData.index)
+        parts = 10
+        each_size = math.floor(total_length/parts)
+        for i in range(parts):
+            start = i*each_size
+            if i==(parts-1):
+                end = total_length-1
+            else:
+                end = start+each_size
+            temp = trainingData[start:end]
+            print("Saving part-"+str(i+1)+", size: "+str(len(temp.index)))
+            temp.to_csv("original_exp_training_"+str(i)+".csv")
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
